@@ -4,6 +4,7 @@ using HarmonyLib;
 using MidiPlayerTK;
 using MTM101BaldAPI.AssetTools;
 using MTM101BaldAPI.Registers;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -54,7 +55,12 @@ namespace BBPlusCustomMusics
 						if (midi.Value) continue;
 						foreach (var data in midi.Key.Split('_'))
 						{
-							if (data.StartsWith("INF") && int.TryParse(data.TrimStart('I', 'N', 'F'), out int n) && n <= num)
+							if (!data.StartsWith("INF")) 
+								continue;
+							string[] nums = data.Trim('I', 'N', 'F').Split('-');
+
+
+							if (int.TryParse(nums[0], out int n) && n <= num && (nums.Length == 1 || int.TryParse(nums[1], out int n2) && n2 >= num))
 							{
 								MusicalInjection.overridingMidis.Add(midi.Key);
 								break;
@@ -111,7 +117,7 @@ namespace BBPlusCustomMusics
 				transform.localScale += 1 / midiEvent.Value * Vector3.one;
 				if (transform.localScale.magnitude > maxLimit)
 					transform.localScale = Vector3.one * maxLimit;
-				axisOffset += midiEvent.Value * Random.Range(-1, 2);
+				axisOffset += midiEvent.Value * UnityEngine.Random.Range(-1, 2);
 				axisOffset = Mathf.Clamp(axisOffset, -axisLimit, axisLimit);
 			}
 
@@ -184,8 +190,11 @@ namespace BBPlusCustomMusics
 				var rng = new System.Random(Singleton<CoreGameManager>.Instance.Seed());
 				for (int i = 0; i < Singleton<CoreGameManager>.Instance.sceneObject.levelNo; i++)
 					rng.Next();
-
+#if DEBUG
+				int idx = rng.Next(midis.Count);
+#else
 				int idx = rng.Next(midis.Count + 1);
+#endif
 				if (idx >= midis.Count)
 					return "school";
 
@@ -206,7 +215,7 @@ namespace BBPlusCustomMusics
 
 					List<string> midis = new(CustomMusicPlug.midis.Where(x => x.Value).Select(x => x.Key)); // Gets the elevator musics
 
-					int idx = Random.Range(0, midis.Count + 1);
+					int idx = UnityEngine.Random.Range(0, midis.Count + 1);
 					if (idx >= midis.Count)
 						return "Elevator";
 					return midis[idx];
