@@ -2,6 +2,7 @@
 using BepInEx.Bootstrap;
 using HarmonyLib;
 using MidiPlayerTK;
+using MTM101BaldAPI;
 using MTM101BaldAPI.AssetTools;
 using MTM101BaldAPI.Registers;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ using UnityEngine.UI;
 
 namespace BBPlusCustomMusics
 {
-	[BepInPlugin("pixelguy.pixelmodding.baldiplus.custommusics", PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
+	[BepInPlugin("pixelguy.pixelmodding.baldiplus.custommusics", PluginInfo.PLUGIN_NAME, "1.0.1")]
 	[BepInDependency("mtm101.rulerp.bbplus.baldidevapi", BepInDependency.DependencyFlags.HardDependency)]
 	public class CustomMusicPlug : BaseUnityPlugin
 	{
@@ -28,18 +29,13 @@ namespace BBPlusCustomMusics
 			LoadingEvents.RegisterOnAssetsLoaded(Info, () =>
 			{
 				var spr = AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromFile(Path.Combine(p, "boomBox.png")), 146);
-				foreach (var el in Resources.FindObjectsOfTypeAll<ElevatorScreen>())
-				{
-					var boomBox = new GameObject("ElevatorBoomBox").AddComponent<Image>();
-					boomBox.gameObject.layer = LayerMask.NameToLayer("UI");
-					boomBox.material = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name == "UI_AsSprite");
-					boomBox.sprite = spr;
-					boomBox.transform.SetParent(el.transform.Find("ElevatorTransission"));
-					boomBox.transform.SetSiblingIndex(6); // Apparently this affects the render order, huh
-					boomBox.transform.localScale = Vector3.one;
-					boomBox.transform.localPosition = new(-77.74f, 93.05f);
-					boomBox.gameObject.AddComponent<BoomBox>();
-				}
+				var boomBox = new GameObject("ElevatorBoomBox").AddComponent<Image>();
+				boomBox.gameObject.layer = LayerMask.NameToLayer("UI");
+				boomBox.material = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name == "UI_AsSprite");
+				boomBox.sprite = spr;
+				boomBox.gameObject.ConvertToPrefab(true);
+				boomBoxPre = boomBox.gameObject.AddComponent<BoomBox>();
+
 			}, false);
 
 			usingEndless = Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.endlessfloors");
@@ -103,6 +99,8 @@ namespace BBPlusCustomMusics
 		internal static List<KeyValuePair<string, bool>> midis = []; // bool indicates whether it is elevator music or not
 
 		internal static bool usingEndless = false;
+
+		internal static BoomBox boomBoxPre;
 	}
 
 	// Boom Box
@@ -150,6 +148,17 @@ namespace BBPlusCustomMusics
 	[HarmonyPatch]
 	internal static class MusicalInjection
 	{
+		[HarmonyPatch(typeof(ElevatorScreen), "Initialize")]
+		static void Prefix(ElevatorScreen __instance)
+		{
+			var boomBox = Object.Instantiate(CustomMusicPlug.boomBoxPre);
+			boomBox.transform.SetParent(__instance.transform.Find("ElevatorTransission"));
+			boomBox.transform.SetSiblingIndex(6); // Apparently this affects the render order, huh
+			boomBox.transform.localScale = Vector3.one;
+			boomBox.transform.localPosition = new(-77.74f, 93.05f);
+		}
+
+
 		internal static List<string> overridingMidis = [];
 		[HarmonyPatch(typeof(MainGameManager), "BeginPlay")]
 		[HarmonyPatch(typeof(EndlessGameManager), "BeginPlay")]
