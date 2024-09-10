@@ -14,7 +14,7 @@ using UnityEngine.UI;
 
 namespace BBPlusCustomMusics
 {
-	[BepInPlugin("pixelguy.pixelmodding.baldiplus.custommusics", PluginInfo.PLUGIN_NAME, "1.0.1")]
+	[BepInPlugin("pixelguy.pixelmodding.baldiplus.custommusics", PluginInfo.PLUGIN_NAME, "1.0.2")]
 	[BepInDependency("mtm101.rulerp.bbplus.baldidevapi", BepInDependency.DependencyFlags.HardDependency)]
 	public class CustomMusicPlug : BaseUnityPlugin
 	{
@@ -76,7 +76,18 @@ namespace BBPlusCustomMusics
 			{
 				string extension = Path.GetExtension(file);
 				if (extension == ".mid" || extension == ".midi")
-					midis.Add(new(AssetLoader.MidiFromFile(file, Path.GetFileNameWithoutExtension(file)), isElevatorMusic));
+				{
+					string name = customMusicsPrefix + Path.GetFileNameWithoutExtension(file);
+					if (!repeatedMidis.TryGetValue(name, out int val))
+					{
+						repeatedMidis.Add(name, 0);
+						val = 0;
+					}
+
+					midis.Add(new(AssetLoader.MidiFromFile(file, name + $"_{++val}"), isElevatorMusic));
+
+					repeatedMidis[name]++;
+				}
 
 			}
 		}
@@ -97,10 +108,13 @@ namespace BBPlusCustomMusics
 		}
 
 		internal static List<KeyValuePair<string, bool>> midis = []; // bool indicates whether it is elevator music or not
+		readonly static Dictionary<string, int> repeatedMidis = [];
 
 		internal static bool usingEndless = false;
 
 		internal static BoomBox boomBoxPre;
+
+		const string customMusicsPrefix = "customMusics_";
 	}
 
 	// Boom Box
