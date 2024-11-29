@@ -14,7 +14,7 @@ using UnityEngine.UI;
 
 namespace BBPlusCustomMusics
 {
-	[BepInPlugin("pixelguy.pixelmodding.baldiplus.custommusics", PluginInfo.PLUGIN_NAME, "1.0.2")]
+	[BepInPlugin("pixelguy.pixelmodding.baldiplus.custommusics", PluginInfo.PLUGIN_NAME, "1.0.3")]
 	[BepInDependency("mtm101.rulerp.bbplus.baldidevapi", BepInDependency.DependencyFlags.HardDependency)]
 	public class CustomMusicPlug : BaseUnityPlugin
 	{
@@ -146,6 +146,8 @@ namespace BBPlusCustomMusics
 			transform.localScale += ((Vector3.one * minLimit) - transform.localScale) * 3.8f * Time.unscaledDeltaTime;
 			if (transform.localScale.magnitude < minLimit)
 				transform.localScale = Vector3.one * minLimit;
+			if (transform.localScale.magnitude > maxLimit)
+				transform.localScale = Vector3.one * maxLimit;
 			axisOffset += (1f - axisOffset) * 3.4f * Time.unscaledDeltaTime;
 			transform.rotation = Quaternion.Euler(0f, 0f, axisOffset);
 		}
