@@ -14,7 +14,7 @@ using UnityEngine.UI;
 
 namespace BBPlusCustomMusics
 {
-	[BepInPlugin("pixelguy.pixelmodding.baldiplus.custommusics", PluginInfo.PLUGIN_NAME, "1.0.3")]
+	[BepInPlugin("pixelguy.pixelmodding.baldiplus.custommusics", PluginInfo.PLUGIN_NAME, "1.0.4")]
 	[BepInDependency("mtm101.rulerp.bbplus.baldidevapi", BepInDependency.DependencyFlags.HardDependency)]
 	public class CustomMusicPlug : BaseUnityPlugin
 	{
@@ -42,7 +42,7 @@ namespace BBPlusCustomMusics
 
 			if (usingEndless)
 			{  // endless floors confirmation :O
-				GeneratorManagement.Register(this, GenerationModType.Finalizer, (name, num, lvlobj) =>
+				GeneratorManagement.Register(this, GenerationModType.Finalizer, (name, num, _) =>
 				{
 					MusicalInjection.overridingMidis.Clear();
 					foreach (var midi in midis)
@@ -125,9 +125,9 @@ namespace BBPlusCustomMusics
 		{
 			if (midiEvent.Command == MPTKCommand.NoteOn || midiEvent.Command == MPTKCommand.NoteOff)
 			{
-				transform.localScale += 1 / midiEvent.Value * Vector3.one;
-				if (transform.localScale.magnitude > maxLimit)
-					transform.localScale = Vector3.one * maxLimit;
+				transform.localScale += midiEvent.Value * incrementConstant * one;
+				if (transform.localScale.y > maxLimit)
+					transform.localScale = one * maxLimit;
 				axisOffset += midiEvent.Value * UnityEngine.Random.Range(-1, 2);
 				axisOffset = Mathf.Clamp(axisOffset, -axisLimit, axisLimit);
 			}
@@ -143,18 +143,21 @@ namespace BBPlusCustomMusics
 
 		void Update()
 		{
-			transform.localScale += ((Vector3.one * minLimit) - transform.localScale) * 3.8f * Time.unscaledDeltaTime;
-			if (transform.localScale.magnitude < minLimit)
-				transform.localScale = Vector3.one * minLimit;
-			if (transform.localScale.magnitude > maxLimit)
-				transform.localScale = Vector3.one * maxLimit;
+			transform.localScale += ((one * minLimit) - transform.localScale) * 3.8f * Time.unscaledDeltaTime;
+			if (transform.localScale.y < minLimit)
+				transform.localScale = one * minLimit;
+			if (transform.localScale.y > maxLimit)
+				transform.localScale = one * maxLimit;
+
 			axisOffset += (1f - axisOffset) * 3.4f * Time.unscaledDeltaTime;
 			transform.rotation = Quaternion.Euler(0f, 0f, axisOffset);
 		}
 
 		float axisOffset = 0f;
 
-		const float maxLimit = 0.65f, minLimit = 0.5f, axisLimit = 15f;
+		const float maxLimit = 0.65f, minLimit = 0.5f, axisLimit = 15f, incrementConstant = 0.65f;
+
+		Vector3 one = Vector3.one;
 
 	}
 
