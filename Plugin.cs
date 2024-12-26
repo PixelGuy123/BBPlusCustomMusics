@@ -14,14 +14,18 @@ using UnityEngine.UI;
 
 namespace BBPlusCustomMusics
 {
-	[BepInPlugin("pixelguy.pixelmodding.baldiplus.custommusics", PluginInfo.PLUGIN_NAME, "1.0.4")]
+	[BepInPlugin("pixelguy.pixelmodding.baldiplus.custommusics", PluginInfo.PLUGIN_NAME, "1.0.5")]
 	[BepInDependency("mtm101.rulerp.bbplus.baldidevapi", BepInDependency.DependencyFlags.HardDependency)]
+
+	[BepInDependency("mtm101.rulerp.baldiplus.endlessfloors", BepInDependency.DependencyFlags.SoftDependency)]
+	[BepInDependency("Rad.cmr.baldiplus.arcaderenovations", BepInDependency.DependencyFlags.SoftDependency)]
 	public class CustomMusicPlug : BaseUnityPlugin
 	{
 		private void Awake()
 		{
 			new Harmony("pixelguy.pixelmodding.baldiplus.custommusics").PatchAll();
 			string p = AssetLoader.GetModPath(this);
+			AddAmbiencesFromDirectory(p, "ambiences");
 			AddMidisFromDirectory(false, p, "schoolMusics");
 			AddMidisFromDirectory(true, p, "elevatorMusics");
 			AddSoundFontsFromDirectory(p, "sfsFiles");
@@ -38,31 +42,101 @@ namespace BBPlusCustomMusics
 
 			}, false);
 
-			usingEndless = Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.endlessfloors");
+			usingEndless = Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.endlessfloors") || Chainloader.PluginInfos.ContainsKey("Rad.cmr.baldiplus.arcaderenovations");
 
-			if (usingEndless)
-			{  // endless floors confirmation :O
-				GeneratorManagement.Register(this, GenerationModType.Finalizer, (name, num, _) =>
+			GeneratorManagement.Register(this, GenerationModType.Finalizer, (levelTitle, num, sco) =>
+			{
+				if (usingEndless)
 				{
-					MusicalInjection.overridingMidis.Clear();
-					foreach (var midi in midis)
+					// endless floors confirmation :O
+					InfiniteFloorsInjection(num);
+					return;
+				}
+
+				if (sco.manager is MainGameManager man)
+				{
+					var ambienceNoises = new List<SoundObject>(CustomMusicPlug.ambienceNoises);
+					for (int i = 0; i < ambienceNoises.Count; i++)
 					{
-						if (midi.Value) continue;
-						foreach (var data in midi.Key.Split('_'))
+						string[] midiData = ambienceNoises[i].name.Split('_');
+						if (midiData.Length == 1) continue; // All floors lul
+
+
+						if (!midiData.Contains(levelTitle))
 						{
-							if (!data.StartsWith("INF")) 
-								continue;
-							string[] nums = data.Trim('I', 'N', 'F').Split('-');
-
-
-							if (int.TryParse(nums[0], out int n) && n <= num && (nums.Length == 1 || int.TryParse(nums[1], out int n2) && n2 >= num))
-							{
-								MusicalInjection.overridingMidis.Add(midi.Key);
-								break;
-							}
+							ambienceNoises.RemoveAt(i--);
+							continue;
 						}
+
 					}
-				});
+
+					man.ambience.sounds = man.ambience.sounds.AddRangeToArray([.. ambienceNoises]);
+					return;
+				}
+
+				if (sco.manager is EndlessGameManager eman)
+				{
+					var ambienceNoises = new List<SoundObject>(CustomMusicPlug.ambienceNoises);
+					for (int i = 0; i < ambienceNoises.Count; i++)
+					{
+						string[] midiData = ambienceNoises[i].name.Split('_');
+						if (midiData.Length == 1) continue; // All floors lul
+
+
+						if (!midiData.Contains(levelTitle))
+						{
+							ambienceNoises.RemoveAt(i--);
+							continue;
+						}
+
+					}
+
+					eman.ambience.sounds = eman.ambience.sounds.AddRangeToArray([.. ambienceNoises]);
+					return;
+				}
+			});
+
+
+
+
+		}
+		void InfiniteFloorsInjection(int num)
+		{
+			MusicalInjection.overridingMidis.Clear();
+			MusicalInjection.overridingAmbienceSounds.Clear();
+			foreach (var midi in midis)
+			{
+				if (midi.Value) continue;
+				foreach (var data in midi.Key.Split('_'))
+				{
+					if (!data.StartsWith("INF"))
+						continue;
+					string[] nums = data.Trim('I', 'N', 'F').Split('-');
+
+
+					if (int.TryParse(nums[0], out int n) && n <= num && (nums.Length == 1 || (int.TryParse(nums[1], out int n2) && n2 >= num)))
+					{
+						MusicalInjection.overridingMidis.Add(midi.Key);
+						break;
+					}
+				}
+			}
+
+			foreach (var midi in ambienceNoises) // SoundObject type
+			{
+				foreach (var data in midi.name.Split('_'))
+				{
+					if (!data.StartsWith("INF"))
+						continue;
+					string[] nums = data.Trim('I', 'N', 'F').Split('-');
+
+
+					if (int.TryParse(nums[0], out int n) && n <= num && (nums.Length == 1 || (int.TryParse(nums[1], out int n2) && n2 >= num)))
+					{
+						MusicalInjection.overridingAmbienceSounds.Add(midi);
+						break;
+					}
+				}
 			}
 		}
 
@@ -92,6 +166,22 @@ namespace BBPlusCustomMusics
 			}
 		}
 
+		public static void AddAmbiencesFromDirectory(params string[] paths)
+		{
+			string path = Path.Combine(paths);
+			if (!Directory.Exists(path))
+				throw new System.ArgumentException($"The directory to load ambience sounds from path ({path}) doesn\'t exist!");
+
+			foreach (var file in Directory.EnumerateFiles(path))
+			{
+				var sd = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromFile(file), string.Empty, SoundType.Effect, Color.white);
+				sd.subtitle = false;
+				sd.name = Path.GetFileNameWithoutExtension(file);
+
+				ambienceNoises.Add(sd);
+			}
+		}
+
 		public static void AddSoundFontsFromDirectory(params string[] paths)
 		{
 			string path = Path.Combine(paths);
@@ -108,6 +198,7 @@ namespace BBPlusCustomMusics
 		}
 
 		internal static List<KeyValuePair<string, bool>> midis = []; // bool indicates whether it is elevator music or not
+		internal static List<SoundObject> ambienceNoises = []; // bool indicates whether it is elevator music or not
 		readonly static Dictionary<string, int> repeatedMidis = [];
 
 		internal static bool usingEndless = false;
@@ -128,7 +219,7 @@ namespace BBPlusCustomMusics
 				transform.localScale += midiEvent.Value * incrementConstant * one;
 				if (transform.localScale.y > maxLimit)
 					transform.localScale = one * maxLimit;
-				axisOffset += midiEvent.Value * UnityEngine.Random.Range(-1, 2);
+				axisOffset += midiEvent.Value * Random.Range(-1, 2);
 				axisOffset = Mathf.Clamp(axisOffset, -axisLimit, axisLimit);
 			}
 
@@ -179,6 +270,8 @@ namespace BBPlusCustomMusics
 
 
 		internal static List<string> overridingMidis = [];
+		internal static List<SoundObject> overridingAmbienceSounds = [];
+
 		[HarmonyPatch(typeof(MainGameManager), "BeginPlay")]
 		[HarmonyPatch(typeof(EndlessGameManager), "BeginPlay")]
 		[HarmonyTranspiler]
@@ -189,6 +282,9 @@ namespace BBPlusCustomMusics
 			{
 				List<string> midis = new(!CustomMusicPlug.usingEndless ? CustomMusicPlug.midis.Where(x => !x.Value).Select(x => x.Key) :
 					overridingMidis); // Gets the non elevator musics
+
+				if (CustomMusicPlug.usingEndless)
+					man.ambience.sounds = man.ambience.sounds.AddRangeToArray([.. overridingAmbienceSounds]);
 
 				if (!CustomMusicPlug.usingEndless)
 				{
@@ -242,7 +338,7 @@ namespace BBPlusCustomMusics
 
 					List<string> midis = new(CustomMusicPlug.midis.Where(x => x.Value).Select(x => x.Key)); // Gets the elevator musics
 
-					int idx = UnityEngine.Random.Range(0, midis.Count + 1);
+					int idx = Random.Range(0, midis.Count + 1);
 					if (idx >= midis.Count)
 						return "Elevator";
 					return midis[idx];
