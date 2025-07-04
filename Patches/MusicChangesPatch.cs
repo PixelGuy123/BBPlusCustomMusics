@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
+using BBPlusCustomMusics.Plugin;
+using BBPlusCustomMusics.Plugin.Public;
 using HarmonyLib;
 
 namespace BBPlusCustomMusics.Patches
 {
-    /// <summary>
-    /// Transpiler patch for custom music selection in MainGameManager and EndlessGameManager.
-    /// </summary>
+    // Transpiler patch for custom music selection in MainGameManager and EndlessGameManager.
     [HarmonyPatch]
     internal static class MusicChangesPatch
     {
@@ -21,29 +21,28 @@ namespace BBPlusCustomMusics.Patches
                 .MatchForward(false, new CodeMatch(OpCodes.Ldstr, "school", "school"))
                 .SetInstruction(Transpilers.EmitDelegate((MainGameManager man) =>
                 {
-                    // Get all non-elevator custom midis
-                    List<string> midis = [.. CustomMusicPlug.midis.Where(x => !x.Value).Select(x => x.Key)];
-                    for (int i = 0; i < midis.Count; i++)
+                    var sco = Singleton<CoreGameManager>.Instance.sceneObject;
+                    LevelTypeAndTitleSet midiSettings = new(sco.levelTitle, man.levelObject.type);
+
+                    if (!_midiPairs.TryGetValue(midiSettings, out var midis))
                     {
-                        string[] midiData = midis[i].Split('_');
-
-                        if (midiData.Length == 1) continue;
-
-                        if (!midiData.Contains(Singleton<CoreGameManager>.Instance.sceneObject.levelTitle))
-                        {
-                            midis.RemoveAt(i--);
-                            continue;
-                        }
+                        midis = [..
+                        MusicRegister.allMidis
+                        .Where(x => x.midiDestiny == MidiDestiny.Schoolhouse && x.CanBeInsertedOnFloor(sco.levelTitle, man.levelObject.type))
+                        .Select(x => x.MidiName)
+                        ];
+                        _midiPairs.Add(midiSettings, midis);
                     }
 
                     if (midis.Count == 0)
                         return "school";
 
                     var rng = new System.Random(Singleton<CoreGameManager>.Instance.Seed());
-                    for (int i = 0; i < Singleton<CoreGameManager>.Instance.sceneObject.levelNo; i++)
+                    for (int i = 0; i < sco.levelNo; i++)
                         rng.Next();
 
-                    int idx = rng.Next(midis.Count + (MusicsOptionsCat.values[0] ? 0 : 1));
+                    int idx = rng.Next(midis.Count + (MusicsOptionsCat.ForceOnlyCustomMusics ? 0 : 1));
+
                     if (idx >= midis.Count)
                         return "school";
 
@@ -52,5 +51,9 @@ namespace BBPlusCustomMusics.Patches
                 .Insert([new(OpCodes.Ldarg_0)]) // Add the GameManager instance
                 .InstructionEnumeration();
         }
+
+        // To save memory as creating new collections each time can be a little too costly
+        readonly static Dictionary<LevelTypeAndTitleSet, List<string>> _midiPairs = [];
+        private record struct LevelTypeAndTitleSet(string LevelTitle, LevelType LevelType); // Quick way to store two things for a better equality check and storage
     }
 }

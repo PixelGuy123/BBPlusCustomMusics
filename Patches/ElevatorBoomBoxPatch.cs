@@ -1,13 +1,10 @@
+using BBPlusCustomMusics.Plugin;
 using HarmonyLib;
-using MTM101BaldAPI;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace BBPlusCustomMusics.Patches
 {
-    /// <summary>
-    /// Handles the creation and placement of the custom elevator boom box UI element.
-    /// </summary>
+    // Handles the creation and placement of the custom elevator boom box UI element.
     [HarmonyPatch(typeof(ElevatorScreen), "Initialize")]
     internal static class ElevatorBoomBoxPatch
     {

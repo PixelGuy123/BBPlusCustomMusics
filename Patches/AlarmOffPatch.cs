@@ -2,9 +2,7 @@ using HarmonyLib;
 
 namespace BBPlusCustomMusics.Patches
 {
-    /// <summary>
-    /// Patch to flush the alarm audio queue when alarm is set off or closed.
-    /// </summary>
+    // Patch to flush the alarm audio queue when alarm is set off or closed.
     [HarmonyPatch(typeof(StoreRoomFunction), "SetOffAlarm")]
     [HarmonyPatch(typeof(StoreRoomFunction), "Close")]
     internal static class AlarmOffPatch

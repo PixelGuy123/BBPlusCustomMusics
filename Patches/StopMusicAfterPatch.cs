@@ -1,11 +1,8 @@
 using HarmonyLib;
-using MTM101BaldAPI;
 
 namespace BBPlusCustomMusics.Patches
 {
-    /// <summary>
-    /// Ensures music is stopped after elevator transition.
-    /// </summary>
+    // Ensures music is stopped after elevator transition.
     [HarmonyPatch(typeof(ElevatorScreen), "ZoomIntro", MethodType.Enumerator)]
     internal static class StopMusicAfterPatch
     {
