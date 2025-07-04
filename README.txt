@@ -24,6 +24,8 @@ This pixelguy.pixelmodding.baldiplus.custommusics folder is where you'll put you
 - elevatorMusics: For Midi that plays in the elevator.
 - fieldTripMusic: For Midi during the field trip minigame.
 - fieldTripTutorialMusic: For Midi during the field trip tutorial.
+- timeOutMusic: For Midi during the time out event.
+- tutorialMusic: For Midi during the tutorial floor.
 - ambiences: For background sounds and music.
 - playtimeMusics: For music during the Playtime event.
 - partyMusics: For music during the Party event.
