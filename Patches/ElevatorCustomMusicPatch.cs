@@ -16,7 +16,6 @@ namespace BBPlusCustomMusics.Patches
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> ElevatorCustomMusic(IEnumerable<CodeInstruction> instructions)
         {
-            // Replace the hardcoded "Elevator" music selection with custom logic
             return new CodeMatcher(instructions)
                 .MatchForward(false, new CodeMatch(OpCodes.Ldstr, "Elevator", "Elevator"))
                 .SetInstruction(Transpilers.EmitDelegate(() =>

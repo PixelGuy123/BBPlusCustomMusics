@@ -15,7 +15,6 @@ namespace BBPlusCustomMusics.Patches
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> ElevatorCustomMusic(IEnumerable<CodeInstruction> instructions)
         {
-            // Replace the hardcoded "TimeOut" music selection with custom logic
             return new CodeMatcher(instructions)
                 .MatchForward(false, new CodeMatch(OpCodes.Ldstr, "TimeOut_MMP_Corrected", "TimeOut_MMP_Corrected"))
                 .SetInstruction(Transpilers.EmitDelegate(() =>

@@ -11,11 +11,10 @@ namespace BBPlusCustomMusics.Patches
     [HarmonyPatch]
     internal static class TutorialGameManagerPatch
     {
-        [HarmonyPatch(typeof(TutorialGameManager), "Begin")]
+        [HarmonyPatch(typeof(TutorialGameManager), "BeginPlay")]
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> ElevatorCustomMusic(IEnumerable<CodeInstruction> instructions)
         {
-            // Replace the hardcoded "TimeOut" music selection with custom logic
             return new CodeMatcher(instructions)
                 .MatchForward(false, new CodeMatch(OpCodes.Ldstr, "Tutorial_MMP_Corrected", "Tutorial_MMP_Corrected"))
                 .SetInstruction(Transpilers.EmitDelegate(() =>

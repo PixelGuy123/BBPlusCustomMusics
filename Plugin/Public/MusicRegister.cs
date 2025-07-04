@@ -72,7 +72,8 @@ public static class MusicRegister
             sd.subtitle = false;
             sd.name = fileName;
 
-            allSounds.Add(new SoundObjectHolder(sd, soundDestiny, floors));
+            SoundObjectHolder holder = floors != null ? new(sd, soundDestiny, floors) : new(sd, soundDestiny);
+            allSounds.Add(holder);
         }
     }
 
@@ -99,14 +100,11 @@ public static class MusicRegister
                     IfMIDIHolderExistsAlready_MergeData(fileName, floors, types)) // AND there's data that can be merged (if not, the fileName is treated anyways, so it can continue)
                     continue;
 
-                if (types != null && floors != null)
-                {
-                    // If, by the end, LevelType and Floors are a thing, the new MIDIHolder should be added here
-                    allMidis.Add(new MIDIHolder(Return_NonDuplicated_MidiName(fileName), midiDestiny, types, floors));
-                    continue;
-                }
+                MIDIHolder holder = types != null && floors != null ?
+                    new(Return_NonDuplicated_MidiName(fileName), midiDestiny, types, floors) : // If, by the end, LevelType and Floors are a thing, the new MIDIHolder should be added here
+                    new(Return_NonDuplicated_MidiName(fileName), midiDestiny);
 
-                allMidis.Add(new MIDIHolder(Return_NonDuplicated_MidiName(fileName), midiDestiny));
+                allMidis.Add(holder);
             }
         }
 
@@ -135,7 +133,8 @@ public static class MusicRegister
         string[] levelTypeDirectories = Directory.GetDirectories(path);
         for (int i = 0; i < levelTypeDirectories.Length; i++)
         {
-            string directoryName = Path.GetDirectoryName(levelTypeDirectories[i]);
+            string directoryName = Path.GetFileNameWithoutExtension(levelTypeDirectories[i]); // Works for directories
+            // Debug.Log("Found directory for schoolhouse: " + directoryName);
             LevelType[] parsedLevelTypes;
             try
             {
