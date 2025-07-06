@@ -135,7 +135,7 @@ namespace BBPlusCustomMusics.Plugin
 				man.ambience.sounds = man.ambience.sounds.AddRangeToArray(
 				[..
 				MusicRegister.allSounds
-				.Where(x => x.CanBeInsertedOnFloor(levelTitle))
+				.Where(x => x.soundDestiny == SoundDestiny.Ambience && x.CanBeInsertedOnFloor(levelTitle))
 				.Select(x => x.soundObject)
 				]);
 				return;
@@ -145,7 +145,7 @@ namespace BBPlusCustomMusics.Plugin
 				eman.ambience.sounds = eman.ambience.sounds.AddRangeToArray(
 				[..
 				MusicRegister.allSounds
-				.Where(x => x.CanBeInsertedOnFloor(levelTitle))
+				.Where(x => x.soundDestiny == SoundDestiny.Ambience && x.CanBeInsertedOnFloor(levelTitle))
 				.Select(x => x.soundObject)
 				]);
 				return;

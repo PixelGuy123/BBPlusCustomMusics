@@ -104,6 +104,9 @@ public static class MusicRegister
                     new(Return_NonDuplicated_MidiName(fileName), midiDestiny, types, floors) : // If, by the end, LevelType and Floors are a thing, the new MIDIHolder should be added here
                     new(Return_NonDuplicated_MidiName(fileName), midiDestiny);
 
+                // Loads MIDI
+                holder.MidiName = AssetLoader.MidiFromFile(file, holder.MidiName);
+
                 allMidis.Add(holder);
             }
         }
@@ -193,7 +196,7 @@ public static class MusicRegister
     // *********** MIDIs/Sounds stored here ************
 
     // ******* Private Structs for the system ******
-    internal readonly struct MIDIHolder
+    internal struct MIDIHolder
     {
         public MIDIHolder(string midiName, MidiDestiny midiDestiny)
         {
@@ -209,7 +212,7 @@ public static class MusicRegister
             this.allowedLevelTypes = [.. allowedLevelTypes];
         }
 
-        public readonly string MidiName = string.Empty;
+        public string MidiName = string.Empty;
         public readonly MidiDestiny midiDestiny;
         internal readonly HashSet<string> allowedFloors = null;
         internal readonly HashSet<LevelType> allowedLevelTypes = null;
