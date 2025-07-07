@@ -2,8 +2,7 @@ using System.Collections.Generic;
 
 namespace BBPlusCustomMusics.Plugin.Public;
 
-// ******* Private Structs for the system ******
-public struct MIDIHolder
+public class MIDIHolder
 {
     internal MIDIHolder(string midiName, MidiDestiny midiDestiny)
     {
@@ -24,13 +23,9 @@ public struct MIDIHolder
     public HashSet<string> allowedFloors = null;
     public HashSet<LevelType> allowedLevelTypes = null;
 
-    public bool CanBeInsertedOnFloor(string floor, LevelType floorType)
-    {
-        if (allowedFloors == null || allowedLevelTypes == null)
-            return true; // If it is not a Floor-specific MIDI, it'll return true by default
+    public bool CanBeInsertedOnFloor(string floor, LevelType floorType) =>
+        (allowedFloors == null || allowedFloors.Contains(floor)) && (allowedLevelTypes == null || allowedLevelTypes.Contains(floorType));
 
-        return allowedFloors.Contains(floor) && allowedLevelTypes.Contains(floorType);
-    }
 
     internal void InitializeFloorFeaturesIfNotReady()
     {

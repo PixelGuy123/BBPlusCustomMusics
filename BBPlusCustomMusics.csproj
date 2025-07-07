@@ -4,7 +4,7 @@
     <TargetFramework>net46</TargetFramework>
     <AssemblyName>BBPlusCustomMusics</AssemblyName>
     <Description>Adds custom randomized musics for every environment inside the game.</Description>
-    <Version>1.1.1</Version>
+    <Version>1.1.1.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>

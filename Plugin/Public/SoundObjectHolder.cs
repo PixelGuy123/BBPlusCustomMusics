@@ -2,10 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace BBPlusCustomMusics.Plugin.Public;
-
-
-// ****** SoundObject Holder ******
-public struct SoundObjectHolder
+public class SoundObjectHolder
 {
     internal SoundObjectHolder(SoundObject soundObject, SoundDestiny soundDestiny)
     {
