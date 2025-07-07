@@ -7,32 +7,28 @@ using UnityEngine;
 
 namespace BBPlusCustomMusics.Plugin.Public;
 
-public static class MusicRegister
+public static partial class MusicRegister
 {
     // ===================== Public Static Methods =====================
-    public static void AddMIDIsFromDirectory(MidiDestiny midiDestiny, params string[] paths)
+    public static MIDIHolder[] AddMIDIsFromDirectory(MidiDestiny midiDestiny, params string[] paths)
     {
         string path = Path.Combine(paths);
         if (!Directory.Exists(path))
             throw new System.ArgumentException($"The directory to load MIDIs from path ({path}) doesn't exist!");
 
-        switch (midiDestiny)
+        return midiDestiny switch
         {
-            case MidiDestiny.Schoolhouse:
-                GetAllMIDIs_Schoolhouse(path);
-                return;
-            default:
-                GetAllMIDIs(path, midiDestiny, null);
-                return;
-        }
+            MidiDestiny.Schoolhouse => GetAllMIDIs_Schoolhouse(path),
+            _ => GetAllMIDIs(path, midiDestiny, null),
+        };
     }
-    public static void AddMusicFilesFromDirectory(SoundDestiny soundDestiny, params string[] paths)
+    public static SoundObjectHolder[] AddMusicFilesFromDirectory(SoundDestiny soundDestiny, params string[] paths)
     {
         string path = Path.Combine(paths);
         if (!Directory.Exists(path))
             throw new System.ArgumentException($"The directory to load Music Files from path ({path}) doesn't exist!");
 
-        GetAllSoundObjects(path, soundDestiny);
+        return GetAllSoundObjects(path, soundDestiny);
     }
     public static void AddSoundFontsFromDirectory(params string[] paths)
     {
@@ -51,8 +47,9 @@ public static class MusicRegister
 
     #region Music Helpers
 
-    private static void GetAllSoundObjects(string path, SoundDestiny soundDestiny)
+    private static SoundObjectHolder[] GetAllSoundObjects(string path, SoundDestiny soundDestiny)
     {
+        _recentlyFoundSounds.Clear();
         foreach (var file in Directory.EnumerateFiles(path))
         {
             try
@@ -66,7 +63,7 @@ public static class MusicRegister
             }
 
             string fileName = Path.GetFileNameWithoutExtension(file);
-            TryToExtractFloorsFromMusicName(fileName, out fileName, out var floors);
+            TryToExtractFloorsFromMusicName(fileName, out var floors);
 
             var sd = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromFile(file), string.Empty, SoundType.Effect, Color.white);
             sd.subtitle = false;
@@ -74,15 +71,18 @@ public static class MusicRegister
 
             SoundObjectHolder holder = floors != null ? new(sd, soundDestiny, floors) : new(sd, soundDestiny);
             allSounds.Add(holder);
+            _recentlyFoundSounds.Add(holder);
         }
+        return [.. _recentlyFoundSounds];
     }
 
     #endregion
 
     // ***** MIDI Helpers *****
     #region MIDI Helpers
-    private static void GetAllMIDIs(string path, MidiDestiny midiDestiny, LevelType[] types)
+    private static MIDIHolder[] GetAllMIDIs(string path, MidiDestiny midiDestiny, LevelType[] types)
     {
+        _recentlyFoundMidis.Clear();
         string[] files = Directory.GetFiles(path);
         for (int i = 0; i < files.Length; i++)
         {
@@ -92,7 +92,7 @@ public static class MusicRegister
             if (extension == ".mid" || extension == ".midi")
             {
                 string fileName = Path.GetFileNameWithoutExtension(file);
-                bool successToExtractFloors = TryToExtractFloorsFromMusicName(fileName, out fileName, out var floors);
+                bool successToExtractFloors = TryToExtractFloorsFromMusicName(fileName, out var floors);
 
                 if (
                     midiDestiny == MidiDestiny.Schoolhouse && // If it is for the schoolhouse
@@ -107,9 +107,13 @@ public static class MusicRegister
                 // Loads MIDI
                 holder.MidiName = AssetLoader.MidiFromFile(file, holder.MidiName);
 
+                _storedMidis.Add(holder.MidiName, holder);
                 allMidis.Add(holder);
+                _recentlyFoundMidis.Add(holder);
             }
         }
+
+        return [.. _recentlyFoundMidis];
 
         // *** Inner Local Functions ***
         static bool IfMIDIHolderExistsAlready_MergeData(string midiName, string[] allowedFloors, LevelType[] allowedLevelTypes)
@@ -120,6 +124,8 @@ public static class MusicRegister
             }
 
             // School house uses a different method since it needs levelType from the directories. Therefore, it re-uses the same reference and merge the allowedLevelTypes and allowedFloors.
+            MIDIHolderReference.InitializeFloorFeaturesIfNotReady();
+
             for (int i = 0; i < allowedFloors.Length; i++)
                 MIDIHolderReference.allowedFloors.Add(allowedFloors[i]);
 
@@ -131,8 +137,9 @@ public static class MusicRegister
     }
 
     // Specialized GetAllMIDIs for Schoolhouse ones, as they contain the LevelType thing
-    private static void GetAllMIDIs_Schoolhouse(string path)
+    private static MIDIHolder[] GetAllMIDIs_Schoolhouse(string path)
     {
+        _recentlyFoundSchoolhouseMidis.Clear();
         string[] levelTypeDirectories = Directory.GetDirectories(path);
         for (int i = 0; i < levelTypeDirectories.Length; i++)
         {
@@ -153,11 +160,13 @@ public static class MusicRegister
                 continue;
             }
 
-            GetAllMIDIs(levelTypeDirectories[i], MidiDestiny.Schoolhouse, parsedLevelTypes);
+            _recentlyFoundSchoolhouseMidis.AddRange(GetAllMIDIs(levelTypeDirectories[i], MidiDestiny.Schoolhouse, parsedLevelTypes));
         }
+
+        return [.. _recentlyFoundSchoolhouseMidis];
     }
 
-    private static bool TryToExtractFloorsFromMusicName(string midiName, out string treatedName, out string[] extractedFloors)
+    private static bool TryToExtractFloorsFromMusicName(string midiName, out string[] extractedFloors)
     {
         extractedFloors = null;
         // Attempts to separate the name properly
@@ -166,7 +175,6 @@ public static class MusicRegister
         // If there's only one item, that means the name itself doesn't have any more "floors" in it
         if (separatedStrings.Length <= 1)
         {
-            treatedName = midiName;
             return false;
         }
 
@@ -175,7 +183,6 @@ public static class MusicRegister
         {
             extractedFloors[i - 1] = separatedStrings[i];
         }
-        treatedName = separatedStrings[0]; // The actual name must be this treated one
 
         return true;
     }
@@ -192,95 +199,10 @@ public static class MusicRegister
     }
 
     #endregion
-
-    // *********** MIDIs/Sounds stored here ************
-
-    // ******* Private Structs for the system ******
-    internal struct MIDIHolder
-    {
-        public MIDIHolder(string midiName, MidiDestiny midiDestiny)
-        {
-            MidiName = Constants.CUSTOMMUSICS_MIDI_PREFIX_TAG + midiName;
-            this.midiDestiny = midiDestiny;
-
-            _storedMidis.Add(midiName, this);
-        }
-
-        public MIDIHolder(string midiName, MidiDestiny midiDestiny, LevelType[] allowedLevelTypes, string[] allowedFloors) : this(midiName, midiDestiny)
-        {
-            this.allowedFloors = allowedFloors.Length == 0 ? null : [.. allowedFloors];
-            this.allowedLevelTypes = [.. allowedLevelTypes];
-        }
-
-        public string MidiName = string.Empty;
-        public readonly MidiDestiny midiDestiny;
-        internal readonly HashSet<string> allowedFloors = null;
-        internal readonly HashSet<LevelType> allowedLevelTypes = null;
-
-        public bool CanBeInsertedOnFloor(string floor, LevelType floorType)
-        {
-            if (allowedFloors == null || allowedLevelTypes == null)
-                return true; // If it is not a Floor-specific MIDI, it'll return true by default
-
-            return allowedFloors.Contains(floor) && allowedLevelTypes.Contains(floorType);
-        }
-    }
-
-    // ****** SoundObject Holder ******
-    internal readonly struct SoundObjectHolder
-    {
-        public SoundObjectHolder(SoundObject soundObject, SoundDestiny soundDestiny)
-        {
-            this.soundDestiny = soundDestiny;
-
-            // Default settings for the SoundObject
-            soundObject.soundType = SoundType.Music;
-            soundObject.subtitle = false;
-            soundObject.soundKey = string.Empty;
-
-            // Switch to handle important settings from the SoundObjects
-            switch (this.soundDestiny)
-            {
-                case SoundDestiny.Ambience:
-                    soundObject.soundType = SoundType.Effect;
-                    break;
-                case SoundDestiny.Playtime:
-                    soundObject.color = Color.red;
-                    soundObject.subtitle = true;
-                    soundObject.soundKey = "Mfx_mus_Playtime";
-                    break;
-                case SoundDestiny.PartyEvent:
-                    soundObject.subtitle = true;
-                    soundObject.soundKey = "Mfx_Party";
-                    break;
-
-                default:
-                    // Do nothing
-                    break;
-            }
-
-            this.soundObject = soundObject;
-            soundObject.name = Constants.CUSTOMMUSICS_SOUND_PREFIX_TAG + soundObject.name;
-        }
-        public SoundObjectHolder(SoundObject soundObject, SoundDestiny soundDestiny, params string[] allowedFloors) : this(soundObject, soundDestiny)
-        {
-            this.allowedFloors = [.. allowedFloors];
-        }
-        public readonly SoundObject soundObject = null;
-        public readonly SoundDestiny soundDestiny;
-        internal readonly HashSet<string> allowedFloors = null;
-
-        public bool CanBeInsertedOnFloor(string floor)
-        {
-            if (allowedFloors == null)
-                return true; // If it is not a Floor-specific MIDI, it'll return true by default
-
-            return allowedFloors.Contains(floor);
-        }
-    }
     // Main List for midis and music
     readonly internal static List<MIDIHolder> allMidis = [];
-    readonly internal static List<SoundObjectHolder> allSounds = [];
+    readonly internal static List<MIDIHolder> _recentlyFoundMidis = [], _recentlyFoundSchoolhouseMidis = [];
+    readonly internal static List<SoundObjectHolder> allSounds = [], _recentlyFoundSounds = [];
     // Required dictionaries for MIDIs
     readonly static Dictionary<string, MIDIHolder> _storedMidis = [];
     readonly static Dictionary<string, int> _repeatedMidis = [];
