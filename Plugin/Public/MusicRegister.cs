@@ -100,10 +100,7 @@ public static partial class MusicRegister
                     IfMIDIHolderExistsAlready_MergeData(fileName, floors, types)) // AND there's data that can be merged (if not, the fileName is treated anyways, so it can continue)
                     continue;
 
-                MIDIHolder holder = types != null && floors != null ?
-                    new(Return_NonDuplicated_MidiName(fileName), midiDestiny, types, floors) : // If, by the end, LevelType and Floors are a thing, the new MIDIHolder should be added here
-                    new(Return_NonDuplicated_MidiName(fileName), midiDestiny);
-
+                MIDIHolder holder = new(Return_NonDuplicated_MidiName(fileName), midiDestiny, types, floors);
                 // Loads MIDI
                 holder.MidiName = AssetLoader.MidiFromFile(file, holder.MidiName);
 
@@ -150,7 +147,7 @@ public static partial class MusicRegister
             {
                 // If the LevelType is equal to a specific *keyword*, use all of the LevelTypes
                 if (directoryName.ToLower() == Constants.MIDI_LOADPROCEDURE_LEVELTYPEALL_KEYWORD)
-                    parsedLevelTypes = Constants.ALL_LEVELTYPES_SET;
+                    parsedLevelTypes = null; // Null means all
                 // Try to get the LevelType through the Directory's name
                 else
                     parsedLevelTypes = [EnumExtensions.GetFromExtendedName<LevelType>(directoryName)];

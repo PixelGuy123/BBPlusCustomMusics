@@ -57,9 +57,6 @@ namespace BBPlusCustomMusics.Plugin
 			// Register asset loading event for boom box prefab
 			LoadingEvents.RegisterOnAssetsLoaded(Info, OnAssetsLoad, LoadingEventOrder.Start);
 
-			// Register asset loading event for boom box prefab
-			LoadingEvents.RegisterOnAssetsLoaded(Info, OnAssetsFinalLoad, LoadingEventOrder.Final);
-
 			// Register ambience noise injection for level generation
 			GeneratorManagement.Register(this, GenerationModType.Finalizer, OnGenerationFinalizer);
 		}
@@ -112,18 +109,6 @@ namespace BBPlusCustomMusics.Plugin
 			boomBox.sprite = spr;
 			boomBox.gameObject.ConvertToPrefab(true);
 			boomBoxPre = boomBox.gameObject.AddComponent<BoomBox>();
-		}
-
-		// Handles ALL leveltype initialization.
-		private void OnAssetsFinalLoad()
-		{
-			if (Constants.ALL_LEVELTYPES_SET != null)
-				return;
-
-			var vals = EnumExtensions.GetValues<LevelType>();
-			Constants.ALL_LEVELTYPES_SET = new LevelType[vals.Length];
-			for (int i = 0; i < vals.Length; i++)
-				Constants.ALL_LEVELTYPES_SET[i] = (LevelType)vals[i]; // Get literally EVERY SINGLE LevelType value, even modded ones
 		}
 
 
