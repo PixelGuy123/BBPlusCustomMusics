@@ -34,19 +34,19 @@ namespace BBPlusCustomMusics.Plugin
 			AssetLoader.LoadLocalizationFolder(Path.Combine(modPath, "Language", "English"), Language.English);
 
 			// Load all custom music and sound assets from their respective directories
-			MusicRegister.AddMIDIsFromDirectory(MidiDestiny.Schoolhouse, modPath, "schoolMusics");
-			MusicRegister.AddMIDIsFromDirectory(MidiDestiny.Elevator, modPath, "elevatorMusics");
-			MusicRegister.AddMIDIsFromDirectory(MidiDestiny.FieldTrip_Minigame, modPath, "fieldTripMusic");
-			MusicRegister.AddMIDIsFromDirectory(MidiDestiny.FieldTrip_Tutorial, modPath, "fieldTripTutorialMusic");
-			MusicRegister.AddMIDIsFromDirectory(MidiDestiny.TimeOut, modPath, "timeOutMusic");
-			MusicRegister.AddMIDIsFromDirectory(MidiDestiny.Tutorial, modPath, "tutorialMusic");
+			SafelyLoadMethod(() => MusicRegister.AddMIDIsFromDirectory(MidiDestiny.Schoolhouse, modPath, "schoolMusics"), "School Musics");
+			SafelyLoadMethod(() => MusicRegister.AddMIDIsFromDirectory(MidiDestiny.Elevator, modPath, "elevatorMusics"), "Elevator Musics");
+			SafelyLoadMethod(() => MusicRegister.AddMIDIsFromDirectory(MidiDestiny.FieldTrip_Minigame, modPath, "fieldTripMusic"), "Field Trip Minigame Musics");
+			SafelyLoadMethod(() => MusicRegister.AddMIDIsFromDirectory(MidiDestiny.FieldTrip_Tutorial, modPath, "fieldTripTutorialMusic"), "Field Trip Tutorial Musics");
+			SafelyLoadMethod(() => MusicRegister.AddMIDIsFromDirectory(MidiDestiny.TimeOut, modPath, "timeOutMusic"), "Time Out Musics");
+			SafelyLoadMethod(() => MusicRegister.AddMIDIsFromDirectory(MidiDestiny.Tutorial, modPath, "tutorialMusic"), "Tutorial Musics");
 
-			MusicRegister.AddMusicFilesFromDirectory(SoundDestiny.Ambience, modPath, "ambiences");
-			MusicRegister.AddMusicFilesFromDirectory(SoundDestiny.Playtime, modPath, "playtimeMusics");
-			MusicRegister.AddMusicFilesFromDirectory(SoundDestiny.PartyEvent, modPath, "partyMusics");
-			MusicRegister.AddMusicFilesFromDirectory(SoundDestiny.JohnnyStore, modPath, "johnnyMusic");
+			SafelyLoadMethod(() => MusicRegister.AddMusicFilesFromDirectory(SoundDestiny.Ambience, modPath, "ambiences"), "Ambience Sounds");
+			SafelyLoadMethod(() => MusicRegister.AddMusicFilesFromDirectory(SoundDestiny.Playtime, modPath, "playtimeMusics"), "Playtime Songs");
+			SafelyLoadMethod(() => MusicRegister.AddMusicFilesFromDirectory(SoundDestiny.PartyEvent, modPath, "partyMusics"), "Party Musics");
+			SafelyLoadMethod(() => MusicRegister.AddMusicFilesFromDirectory(SoundDestiny.JohnnyStore, modPath, "johnnyMusic"), "Johnny\'s Store Musics");
 
-			MusicRegister.AddSoundFontsFromDirectory(modPath, "sfsFiles");
+			SafelyLoadMethod(() => MusicRegister.AddSoundFontsFromDirectory(modPath, "sfsFiles"), "Sound Fonts");
 
 			// Music Config setup
 			CustomOptionsCore.OnMenuInitialize += (menu, handler) => handler.AddCategory<MusicsOptionsCat>("Musics Config");
@@ -59,6 +59,21 @@ namespace BBPlusCustomMusics.Plugin
 
 			// Register ambience noise injection for level generation
 			GeneratorManagement.Register(this, GenerationModType.Finalizer, OnGenerationFinalizer);
+
+
+			// Handle the loading stuff to prevent the boom box from killing the hide and seek
+			static void SafelyLoadMethod(System.Action action, string musicName)
+			{
+				try
+				{
+					action();
+				}
+				catch (System.Exception e)
+				{
+					Debug.LogError($"Failed to load {musicName}. You don\'t need to report the error to the developer if you\'re intending to");
+					Debug.LogException(e);
+				}
+			}
 		}
 
 		// ===================== "Lambda" Methods =====================
