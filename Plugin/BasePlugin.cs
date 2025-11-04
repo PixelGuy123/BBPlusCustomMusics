@@ -120,6 +120,7 @@ namespace BBPlusCustomMusics.Plugin
 			var spr = AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromFile(Path.Combine(p, "boomBox.png")), 146);
 			var boomBox = new GameObject("ElevatorBoomBox").AddComponent<Image>();
 			boomBox.gameObject.layer = LayerMask.NameToLayer("UI");
+			boomBox.gameObject.tag = "Button";
 			boomBox.material = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name == "UI_AsSprite");
 			boomBox.sprite = spr;
 			boomBox.gameObject.ConvertToPrefab(true);

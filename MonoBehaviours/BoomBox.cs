@@ -1,9 +1,10 @@
+using BBPlusCustomMusics.Patches;
 using MidiPlayerTK;
 using UnityEngine;
 
 namespace BBPlusCustomMusics.MonoBehaviours;
 
-public class BoomBox : MonoBehaviour
+public class BoomBox : MenuButton
 {
     void MidiEvent(MPTKEvent midiEvent)
     {
@@ -27,19 +28,42 @@ public class BoomBox : MonoBehaviour
 
     void Update()
     {
-        transform.localScale += ((one * minLimit) - transform.localScale) * 3.8f * Time.unscaledDeltaTime;
-        if (transform.localScale.y < minLimit)
-            transform.localScale = one * minLimit;
-        if (transform.localScale.y > maxLimit)
-            transform.localScale = one * maxLimit;
+        Vector3 scale = transform.localScale;
+        scale += ((one * minLimit) - scale) * 3.8f * Time.unscaledDeltaTime;
+        if (scale.y < minLimit)
+            scale = one * minLimit;
+        if (scale.y > maxLimit)
+            scale = one * maxLimit;
+        scale *= currentSize;
+        transform.localScale = scale;
 
         axisOffset += (1f - axisOffset) * 3.4f * Time.unscaledDeltaTime;
         transform.rotation = Quaternion.Euler(0f, 0f, axisOffset);
     }
 
-    float axisOffset = 0f;
+    // ******* Menu Button stuff ********
+    public override void Highlight()
+    {
+        base.Highlight();
+        currentSize = highlightSize;
+    }
 
-    const float maxLimit = 0.65f, minLimit = 0.5f, axisLimit = 15f, incrementConstant = 0.65f;
+    public override void UnHold()
+    {
+        base.UnHold();
+        currentSize = 1f;
+    }
+
+    public override void Press()
+    {
+        base.Press();
+        Singleton<MusicManager>.Instance.PlayMidi(ElevatorCustomMusicPatch.GetNewRandomElevatorMidi(), loop: true);
+    }
+
+    float axisOffset = 0f, currentSize = 1f;
+
+    [SerializeField]
+    internal float maxLimit = 0.65f, minLimit = 0.5f, axisLimit = 15f, incrementConstant = 0.65f, highlightSize = 1.25f;
 
     Vector3 one = Vector3.one;
 
