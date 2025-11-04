@@ -28,14 +28,13 @@ public class BoomBox : MenuButton
 
     void Update()
     {
-        Vector3 scale = transform.localScale;
         scale += ((one * minLimit) - scale) * 3.8f * Time.unscaledDeltaTime;
         if (scale.y < minLimit)
             scale = one * minLimit;
         if (scale.y > maxLimit)
             scale = one * maxLimit;
-        scale *= currentSize;
-        transform.localScale = scale;
+
+        transform.localScale = scale * currentSize;
 
         axisOffset += (1f - axisOffset) * 3.4f * Time.unscaledDeltaTime;
         transform.rotation = Quaternion.Euler(0f, 0f, axisOffset);
@@ -54,16 +53,15 @@ public class BoomBox : MenuButton
         currentSize = 1f;
     }
 
-    public override void Press()
-    {
-        base.Press();
+    public override void Press() =>
         Singleton<MusicManager>.Instance.PlayMidi(ElevatorCustomMusicPatch.GetNewRandomElevatorMidi(), loop: true);
-    }
+
 
     float axisOffset = 0f, currentSize = 1f;
+    Vector3 scale = Vector3.one;
 
     [SerializeField]
-    internal float maxLimit = 0.65f, minLimit = 0.5f, axisLimit = 15f, incrementConstant = 0.65f, highlightSize = 1.25f;
+    internal float maxLimit = 0.65f, minLimit = 0.5f, axisLimit = 15f, incrementConstant = 0.65f, highlightSize = 1.15f;
 
     Vector3 one = Vector3.one;
 
