@@ -1,0 +1,5 @@
+{"items":[
+	{"key":"CstMscs_Opts_OgMusicToggle","value":"Disable original music"},
+	{"key":"CstMscs_Opts_ToolTip_OgMusicToggle","value":"When marked, the mod will never select the original music to play\n(unless there isn't any custom musics available)."},
+	{"key":"CstMscs_Opts_ToolTip_Apply","value":"Apply all the changes."}
+]}

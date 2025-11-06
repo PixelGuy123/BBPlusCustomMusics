@@ -38,19 +38,26 @@ public class BoomBox : MenuButton
 
         axisOffset += (1f - axisOffset) * 3.4f * Time.unscaledDeltaTime;
         transform.rotation = Quaternion.Euler(0f, 0f, axisOffset);
-    }
 
+        // StandardMenuButton workaround implemented here (why didn't you just add a normal Unhighlight function in MenuButton, mystman??)
+        if (!highlighted && wasHighlighted)
+            Unhighlight();
+        highlighted = false;
+    }
     // ******* Menu Button stuff ********
     public override void Highlight()
     {
         base.Highlight();
         currentSize = highlightSize;
+        highlighted = true;
+        wasHighlighted = true;
     }
 
-    public override void UnHold()
+    public void Unhighlight()
     {
-        base.UnHold();
         currentSize = 1f;
+        highlighted = false;
+        wasHighlighted = false;
     }
 
     public override void Press() =>
